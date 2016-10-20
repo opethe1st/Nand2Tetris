@@ -40,4 +40,41 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+
+    //OutM or Instruction
+    Mux16(b=ALUOutA,a=instruction,sel=instruction[15],out = toA); // Done
+
+    Not(in=instruction[15],out=Ainstruction); //Done
+    Or(a=Ainstruction,b=instruction[5],out=loadA); 
+    ARegister(in = toA,load=loadA,out=outA,out[0..14]=addressM ); // Done 
+    
+    And(a=instruction[15], b=instruction[3], out=writeM);
+
+    Mux16(a=outA,b=inM, sel=instruction[12] , out=outAM);
+    
+    
+    DRegister(in=ALUOutD,load=instruction[4],out=outD); // what makes it load into D? cinstruction and instruction[4]
+
+    // If not instruction then return D in ALU.. I copied this oo...
+    And(a=instruction[11], b=instruction[15], out=zx);   // default 0
+    And(a=instruction[10], b=instruction[15], out=nx);   // default 0
+    Or(a=instruction[9], b=Ainstruction, out=zy);      // default 1
+    Or(a=instruction[8], b=Ainstruction, out=ny);      // default 1
+    And(a=instruction[7], b=instruction[15], out=f);     // default 0
+    And(a=instruction[6], b=instruction[15], out=no);    // default 0
+
+    ALU(x=outD,y=outAM,zx=zx,nx=nx,zy=zy,ny=ny,f=f,no=no,zr=zero,ng=negative,out=ALUOutA,out=ALUOutD,out=outM);
+    
+    //Jump instructions.. copied too.
+    Or(a=negative, b=zero, out=notpositive);
+    Not(in=notpositive, out=positive);
+    And(a=instruction[2], b=negative, out=jump0);
+    And(a=instruction[1], b=zero, out=jump1);
+    And(a=instruction[0], b=positive, out=jump2);
+    Or(a=jump0, b=jump1, out=jump01);
+    Or(a=jump01, b=jump2, out=jump012);
+    And(a=jump012, b=instruction[15], out=jump);
+
+    PC(in=outA,load=jump, inc=true,reset=reset,out[0..14]=pc); 
+
 }
